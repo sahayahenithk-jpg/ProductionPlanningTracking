@@ -1,0 +1,15 @@
+# Go build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Dependency directories
+vendor/
+
+# Local env files
+.env
