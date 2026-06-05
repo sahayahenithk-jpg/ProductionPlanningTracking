@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../pages/LoginView.vue'
 import RegisterView from '../pages/RegisterView.vue'
 import ProductMaster from '../pages/ProductMaster.vue'
+import DashboardView from '../pages/DashboardView.vue'
+import ProductionPlanning from '../pages/ProductionPlanning.vue'
 
 const routes = [
   {
@@ -15,9 +17,19 @@ const routes = [
     component: RegisterView,
   },
   {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: DashboardView,
+  },
+  {
     path: '/products',
     name: 'Products',
     component: ProductMaster,
+  },
+  {
+    path: '/plans',
+    name: 'ProductionPlanning',
+    component: ProductionPlanning,
   },
 ]
 

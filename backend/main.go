@@ -19,7 +19,7 @@ func main() {
 	}
 
 	database := db.ConnectDB()
-	database.AutoMigrate(&models.User{}, &models.Product{})
+	database.AutoMigrate(&models.User{}, &models.Product{}, &models.ProductionPlan{})
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -44,6 +44,10 @@ func main() {
 	protected.POST("/products", handlers.CreateProduct(database))
 	protected.PUT("/products/:id", handlers.UpdateProduct(database))
 	protected.DELETE("/products/:id", handlers.DeleteProduct(database))
+
+	protected.GET("/plans", handlers.ListPlans(database))
+	protected.POST("/plans", handlers.CreatePlan(database))
+	protected.PUT("/plans/:id", handlers.UpdatePlan(database))
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
