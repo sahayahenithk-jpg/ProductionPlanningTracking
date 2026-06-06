@@ -7,6 +7,7 @@
         <router-link to="/products">Products</router-link>
         <router-link to="/plans">Production Plans</router-link>
         <router-link to="/production">Production Entry</router-link>
+        <router-link to="/variance">Variance Report</router-link>
       </nav>
     </header>
     <main>

@@ -5,6 +5,7 @@ import ProductMaster from '../pages/ProductMaster.vue'
 import DashboardView from '../pages/DashboardView.vue'
 import ProductionPlanning from '../pages/ProductionPlanning.vue'
 import ProductionEntry from '../pages/ProductionEntry.vue'
+import VarianceReport from '../pages/VarianceReport.vue'
 
 const routes = [
   {
@@ -36,6 +37,11 @@ const routes = [
     path: '/production',
     name: 'ProductionEntry',
     component: ProductionEntry,
+  },
+  {
+    path: '/variance',
+    name: 'VarianceReport',
+    component: VarianceReport,
   },
 ]
 
