@@ -53,6 +53,7 @@ func main() {
 	protected.POST("/production", handlers.CreateProductionEntry(database))
 
 	protected.GET("/reports/variance", handlers.VarianceReport(database))
+	protected.GET("/reports/summary", handlers.SummaryReport(database))
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)

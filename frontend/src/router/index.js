@@ -40,7 +40,7 @@ const routes = [
   },
   {
     path: '/variance',
-    name: 'VarianceReport',
+    name: 'ProductionReport',
     component: VarianceReport,
   },
 ]
