@@ -8,12 +8,12 @@
 
       <form @submit.prevent="submitLogin" class="login-form">
         <div class="form-group">
-          <label for="username">Username</label>
+          <label for="username">Email or Username</label>
           <input 
             id="username"
             v-model="username" 
             type="text" 
-            placeholder="Enter your username" 
+            placeholder="Enter your email or username" 
             required 
             autocomplete="username"
           />
@@ -53,6 +53,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { setAuth } from '../services/auth'
 
 const router = useRouter()
 
@@ -71,8 +72,8 @@ const submitLogin = async () => {
       password: password.value,
     })
 
-    localStorage.setItem('token', response.data.token)
-    router.push('/products')
+    await setAuth(response.data.token)
+    router.push('/dashboard')
   } catch (err) {
     error.value = err.response?.data?.error || 'Invalid username or password'
   } finally {
@@ -131,10 +132,25 @@ label {
 }
 
 input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
   font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 input:focus {

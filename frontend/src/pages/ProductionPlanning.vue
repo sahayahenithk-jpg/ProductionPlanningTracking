@@ -10,11 +10,11 @@
       </div>
 
       <div class="tabs">
-        <button :class="{ active: view === 'create' }" @click="view = 'create'">Create Plan</button>
+        <button v-if="canEditPlans" :class="{ active: view === 'create' }" @click="view = 'create'">Create Plan</button>
         <button :class="{ active: view === 'list' }" @click="view = 'list'">View / Edit Plans</button>
       </div>
 
-      <div v-if="view === 'create'" class="panel">
+      <div v-if="view === 'create' && canEditPlans" class="panel">
         <form @submit.prevent="savePlan" class="form">
           <div class="grid">
             <input v-model="form.planNumber" placeholder="Plan Number" required />
@@ -26,6 +26,12 @@
             </select>
             <input type="date" v-model="form.planDate" required />
             <input type="number" min="1" v-model.number="form.plannedQuantity" placeholder="Planned Quantity" required />
+            <select v-model.number="form.assignedTo">
+              <option value="" disabled>Select operator to assign</option>
+              <option v-for="user in operators" :key="user.id" :value="user.id">
+                {{ user.name }} ({{ user.email }})
+              </option>
+            </select>
             <input v-model="form.status" placeholder="Status" required />
             <textarea v-model="form.remarks" placeholder="Remarks" class="full"></textarea>
           </div>
@@ -38,6 +44,9 @@
           </div>
         </form>
       </div>
+      <div v-else-if="view === 'create'" class="panel">
+        <p class="info">Only Production Planners and Admins can create or edit plans.</p>
+      </div>
 
       <div v-if="view === 'list'" class="panel">
         <div class="table">
@@ -46,8 +55,9 @@
             <span>Product</span>
             <span>Date</span>
             <span>Quantity</span>
+            <span>Assigned</span>
             <span>Status</span>
-            <span>Actions</span>
+            <span v-if="canEditPlans">Actions</span>
           </div>
 
           <div v-for="plan in plans" :key="plan.planId" class="row">
@@ -55,8 +65,9 @@
             <span>{{ plan.product?.productName || 'Unknown' }}</span>
             <span>{{ formatDate(plan.planDate) }}</span>
             <span>{{ plan.plannedQuantity }}</span>
+            <span>{{ plan.assignedUser?.name || '-' }}</span>
             <span><span class="badge">{{ plan.status || 'Pending' }}</span></span>
-            <div class="actions">
+            <div class="actions" v-if="canEditPlans">
               <button class="edit" @click="startEdit(plan)">Edit</button>
             </div>
           </div>
@@ -69,24 +80,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { getUserRole } from '../services/auth'
 
 const router = useRouter()
 const view = ref('create')
 const products = ref([])
 const plans = ref([])
+const users = ref([])
 const editId = ref(null)
 const error = ref('')
+const role = ref(getUserRole())
 const form = ref({
   planNumber: '',
   productId: null,
   planDate: '',
   plannedQuantity: 0,
+  assignedTo: null,
   remarks: '',
   status: '',
 })
+
+const canEditPlans = computed(() => role.value === 'planner' || role.value === 'admin')
+const operators = computed(() => users.value.filter((user) => user.role === 'operator'))
 
 const loadProducts = async () => {
   try {
@@ -106,6 +124,18 @@ const loadPlans = async () => {
   }
 }
 
+const loadUsers = async () => {
+  if (!canEditPlans.value) {
+    return
+  }
+  try {
+    const response = await api.get('/users')
+    users.value = response.data
+  } catch (err) {
+    error.value = err.response?.data?.error || 'Unable to load users'
+  }
+}
+
 const resetForm = () => {
   editId.value = null
   form.value = {
@@ -113,6 +143,7 @@ const resetForm = () => {
     productId: null,
     planDate: '',
     plannedQuantity: 0,
+    assignedTo: null,
     remarks: '',
     status: '',
   }
@@ -127,6 +158,7 @@ const savePlan = async () => {
     productId: form.value.productId,
     planDate: form.value.planDate,
     plannedQuantity: form.value.plannedQuantity,
+    assignedTo: form.value.assignedTo,
     remarks: form.value.remarks,
     status: form.value.status,
   }
@@ -152,6 +184,7 @@ const startEdit = (plan) => {
     productId: plan.productId,
     planDate: formatDate(plan.planDate),
     plannedQuantity: plan.plannedQuantity,
+    assignedTo: plan.assignedTo || null,
     remarks: plan.remarks,
     status: plan.status,
   }
@@ -166,6 +199,7 @@ const formatDate = (value) => {
 
 const logout = () => {
   localStorage.removeItem('token')
+  localStorage.removeItem('userRole')
   router.push('/')
 }
 
@@ -177,6 +211,7 @@ onMounted(async () => {
   }
   await loadProducts()
   await loadPlans()
+  await loadUsers()
 })
 </script>
 
@@ -249,10 +284,7 @@ onMounted(async () => {
 }
 
 .form {
-  background: #f9fbff;
-  padding: 18px;
-  border-radius: 12px;
-  border: 1px solid #e6ecf5;
+  padding: 0;
   margin-bottom: 20px;
 }
 
@@ -266,10 +298,11 @@ onMounted(async () => {
 .grid select,
 .grid textarea {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 15px;
+  background: #ffffff;
 }
 
 .grid textarea {
@@ -287,8 +320,8 @@ onMounted(async () => {
   margin-top: 16px;
 }
 
-.primary {
-  background: #4a90e2;
+ .primary {
+  background: #1d4ed8;
   color: white;
   border: none;
   padding: 12px 18px;
@@ -296,8 +329,8 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-.secondary {
-  background: #eaeaea;
+ .secondary {
+  background: #e2e8f0;
   border: none;
   padding: 12px 18px;
   border-radius: 10px;

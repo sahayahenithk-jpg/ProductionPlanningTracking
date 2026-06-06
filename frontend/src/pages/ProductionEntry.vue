@@ -44,6 +44,7 @@
             <span>Qty</span>
             <span>Shift</span>
             <span>Remarks</span>
+            <span v-if="canEdit">Actions</span>
           </div>
 
           <div v-for="entry in entries" :key="entry.entryId" class="row">
@@ -53,6 +54,9 @@
             <span>{{ entry.producedQuantity }}</span>
             <span>{{ entry.shift || '-' }}</span>
             <span>{{ entry.remarks || '-' }}</span>
+            <div class="actions" v-if="canEdit">
+              <button class="edit" @click="startEdit(entry)">Edit</button>
+            </div>
           </div>
         </div>
       </div>
@@ -63,14 +67,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { getUserRole } from '../services/auth'
 
 const router = useRouter()
+const role = ref(getUserRole())
+const canEdit = computed(() => role.value === 'operator' || role.value === 'admin')
 const view = ref('create')
 const plans = ref([])
 const entries = ref([])
+const editId = ref(null)
 const error = ref('')
 const form = ref({
   planId: null,
@@ -100,14 +108,20 @@ const loadEntries = async () => {
 
 const saveEntry = async () => {
   error.value = ''
+  const payload = {
+    planId: form.value.planId,
+    productionDate: form.value.productionDate,
+    producedQuantity: form.value.producedQuantity,
+    shift: form.value.shift,
+    remarks: form.value.remarks,
+  }
+
   try {
-    await api.post('/production', {
-      planId: form.value.planId,
-      productionDate: form.value.productionDate,
-      producedQuantity: form.value.producedQuantity,
-      shift: form.value.shift,
-      remarks: form.value.remarks,
-    })
+    if (editId.value) {
+      await api.put(`/production/${editId.value}`, payload)
+    } else {
+      await api.post('/production', payload)
+    }
     resetForm()
     view.value = 'list'
     await loadEntries()
@@ -117,6 +131,7 @@ const saveEntry = async () => {
 }
 
 const resetForm = () => {
+  editId.value = null
   form.value = {
     planId: null,
     productionDate: '',
@@ -127,6 +142,18 @@ const resetForm = () => {
   error.value = ''
 }
 
+const startEdit = (entry) => {
+  editId.value = entry.entryId
+  form.value = {
+    planId: entry.planId,
+    productionDate: formatDate(entry.productionDate),
+    producedQuantity: entry.producedQuantity,
+    shift: entry.shift,
+    remarks: entry.remarks,
+  }
+  view.value = 'create'
+}
+
 const formatDate = (value) => {
   if (!value) return ''
   const date = new Date(value)
@@ -135,6 +162,7 @@ const formatDate = (value) => {
 
 const logout = () => {
   localStorage.removeItem('token')
+  localStorage.removeItem('userRole')
   router.push('/')
 }
 

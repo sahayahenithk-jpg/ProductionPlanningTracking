@@ -9,6 +9,8 @@ type ProductionPlan struct {
 	Product         Product   `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"product"`
 	PlanDate        time.Time `json:"planDate"`
 	PlannedQuantity int       `json:"plannedQuantity"`
+	AssignedTo      *uint     `json:"assignedTo"`
+	AssignedUser    *User     `gorm:"foreignKey:AssignedTo;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"assignedUser,omitempty"`
 	Remarks         string    `gorm:"type:text" json:"remarks"`
 	Status          string    `gorm:"size:50" json:"status"`
 	CreatedAt       time.Time `json:"createdAt"`

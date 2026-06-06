@@ -80,18 +80,18 @@ const submitRegister = async () => {
   justify-content: center;
   align-items: center;
   background: linear-gradient(135deg, #eef2f3, #d9e4f5);
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  padding: 32px 20px;
+  font-family: Inter, system-ui, sans-serif;
 }
 
 /* CARD */
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   background: #ffffff;
-  padding: 32px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 38px 32px;
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
   animation: fadeIn 0.4s ease-in-out;
 }
 
@@ -123,16 +123,23 @@ label {
   color: #444;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
   outline: none;
-  transition: 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   font-size: 14px;
+}
+
+input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 input:focus {

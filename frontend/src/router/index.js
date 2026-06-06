@@ -6,6 +6,8 @@ import DashboardView from '../pages/DashboardView.vue'
 import ProductionPlanning from '../pages/ProductionPlanning.vue'
 import ProductionEntry from '../pages/ProductionEntry.vue'
 import VarianceReport from '../pages/VarianceReport.vue'
+import UserManagement from '../pages/UserManagement.vue'
+import { getUserRole, getToken } from '../services/auth'
 
 const routes = [
   {
@@ -43,11 +45,45 @@ const routes = [
     name: 'ProductionReport',
     component: VarianceReport,
   },
+  {
+    path: '/users',
+    name: 'UserManagement',
+    component: UserManagement,
+  },
 ]
+
+const roleRoutes = {
+  Products: ['admin'],
+  UserManagement: ['admin'],
+  ProductionPlanning: ['planner', 'admin'],
+  ProductionEntry: ['operator', 'admin'],
+  ProductionReport: ['planner', 'admin'],
+  Dashboard: ['admin', 'planner', 'operator'],
+}
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to, from, next) => {
+  const token = getToken()
+  const role = getUserRole()
+
+  if (!token && to.name !== 'Login' && to.name !== 'Register') {
+    return next({ name: 'Login' })
+  }
+
+  if (token && (to.name === 'Login' || to.name === 'Register')) {
+    return next({ name: 'Dashboard' })
+  }
+
+  const allowedRoles = roleRoutes[to.name]
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return next({ name: 'Dashboard' })
+  }
+
+  return next()
 })
 
 export default router

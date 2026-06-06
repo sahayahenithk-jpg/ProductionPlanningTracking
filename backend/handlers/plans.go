@@ -16,6 +16,7 @@ type planInput struct {
 	ProductID       uint   `json:"productId" binding:"required"`
 	PlanDate        string `json:"planDate" binding:"required"`
 	PlannedQuantity int    `json:"plannedQuantity" binding:"required"`
+	AssignedTo      *uint  `json:"assignedTo"`
 	Remarks         string `json:"remarks"`
 	Status          string `json:"status"`
 }
@@ -26,8 +27,19 @@ func parsePlanDate(value string) (time.Time, error) {
 
 func ListPlans(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userID, role, err := getUserContext(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
 		var plans []models.ProductionPlan
-		if err := db.Preload("Product").Find(&plans).Error; err != nil {
+		query := db.Preload("Product").Preload("AssignedUser")
+		if role == "operator" {
+			query = query.Where("production_plans.assigned_to = ?", userID)
+		}
+
+		if err := query.Find(&plans).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to fetch plans"})
 			return
 		}
@@ -48,6 +60,14 @@ func CreatePlan(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		if input.AssignedTo != nil {
+			var user models.User
+			if err := db.First(&user, *input.AssignedTo).Error; err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assigned user"})
+				return
+			}
+		}
+
 		planDate, err := parsePlanDate(input.PlanDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "planDate must be in YYYY-MM-DD format"})
@@ -59,6 +79,7 @@ func CreatePlan(db *gorm.DB) gin.HandlerFunc {
 			ProductID:       input.ProductID,
 			PlanDate:        planDate,
 			PlannedQuantity: input.PlannedQuantity,
+			AssignedTo:      input.AssignedTo,
 			Remarks:         input.Remarks,
 			Status:          input.Status,
 		}
@@ -68,7 +89,7 @@ func CreatePlan(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := db.Preload("Product").First(&plan, plan.PlanID).Error; err != nil {
+		if err := db.Preload("Product").Preload("AssignedUser").First(&plan, plan.PlanID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to fetch created plan"})
 			return
 		}
@@ -103,6 +124,14 @@ func UpdatePlan(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		if input.AssignedTo != nil {
+			var user models.User
+			if err := db.First(&user, *input.AssignedTo).Error; err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assigned user"})
+				return
+			}
+		}
+
 		planDate, err := parsePlanDate(input.PlanDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "planDate must be in YYYY-MM-DD format"})
@@ -114,6 +143,7 @@ func UpdatePlan(db *gorm.DB) gin.HandlerFunc {
 			"product_id":       input.ProductID,
 			"plan_date":        planDate,
 			"planned_quantity": input.PlannedQuantity,
+			"assigned_to":      input.AssignedTo,
 			"remarks":          input.Remarks,
 			"status":           input.Status,
 		}
@@ -123,7 +153,7 @@ func UpdatePlan(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := db.Preload("Product").First(&plan, plan.PlanID).Error; err != nil {
+		if err := db.Preload("Product").Preload("AssignedUser").First(&plan, plan.PlanID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to fetch updated plan"})
 			return
 		}

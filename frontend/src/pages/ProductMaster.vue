@@ -10,22 +10,23 @@
       <!-- FORM -->
       <form @submit.prevent="saveProduct" class="form">
         <div class="grid">
-          <input v-model="form.productCode" placeholder="Product Code" required />
-          <input v-model="form.productName" placeholder="Product Name" required />
-          <input v-model="form.unit" placeholder="Unit (kg, pcs...)" />
-          <input v-model="form.status" placeholder="Status" />
-          <input v-model="form.description" placeholder="Description" class="full" />
+          <input v-model="form.productCode" placeholder="Product Code" required :disabled="!isAdmin" />
+          <input v-model="form.productName" placeholder="Product Name" required :disabled="!isAdmin" />
+          <input v-model="form.unit" placeholder="Unit (kg, pcs...)" :disabled="!isAdmin" />
+          <input v-model="form.status" placeholder="Status" :disabled="!isAdmin" />
+          <input v-model="form.description" placeholder="Description" class="full" :disabled="!isAdmin" />
         </div>
 
         <div class="buttons">
-          <button type="submit" class="primary">
+          <button type="submit" class="primary" :disabled="!isAdmin">
             {{ editId ? 'Update Product' : 'Add Product' }}
           </button>
-          <button type="button" class="secondary" @click="resetForm">
+          <button type="button" class="secondary" @click="resetForm" :disabled="!isAdmin">
             Cancel
           </button>
         </div>
       </form>
+      <p v-if="!isAdmin" class="info">Only Admins can add or edit products.</p>
 
       <!-- ERROR -->
       <p v-if="error" class="error">{{ error }}</p>
@@ -49,8 +50,8 @@
           </span>
 
           <div class="actions">
-            <button class="edit" @click="startEdit(p)">Edit</button>
-            <button class="delete" @click="remove(p.productId)">Delete</button>
+            <button class="edit" @click="startEdit(p)" :disabled="!isAdmin">Edit</button>
+            <button class="delete" @click="remove(p.productId)" :disabled="!isAdmin">Delete</button>
           </div>
         </div>
       </div>
@@ -61,9 +62,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import { getUserRole } from '../services/auth'
 
 const products = ref([])
 const form = ref({
@@ -76,6 +78,8 @@ const form = ref({
 const editId = ref(null)
 const error = ref('')
 const router = useRouter()
+const role = ref(getUserRole())
+const isAdmin = computed(() => role.value === 'admin')
 
 const load = async () => {
   try {
@@ -87,6 +91,11 @@ const load = async () => {
 }
 
 const saveProduct = async () => {
+  if (!isAdmin.value) {
+    error.value = 'Only Admin can modify products.'
+    return
+  }
+
   error.value = ''
   try {
     if (editId.value) {
@@ -113,6 +122,11 @@ const startEdit = (p) => {
 }
 
 const remove = async (id) => {
+  if (!isAdmin.value) {
+    error.value = 'Only Admin can delete products.'
+    return
+  }
+
   try {
     await api.delete(`/products/${id}`)
     load()
