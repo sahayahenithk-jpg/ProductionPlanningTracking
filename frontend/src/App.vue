@@ -6,6 +6,7 @@
         <router-link to="/dashboard">Dashboard</router-link>
         <router-link to="/products">Products</router-link>
         <router-link to="/plans">Production Plans</router-link>
+        <router-link to="/production">Production Entry</router-link>
       </nav>
     </header>
     <main>

@@ -4,6 +4,7 @@ import RegisterView from '../pages/RegisterView.vue'
 import ProductMaster from '../pages/ProductMaster.vue'
 import DashboardView from '../pages/DashboardView.vue'
 import ProductionPlanning from '../pages/ProductionPlanning.vue'
+import ProductionEntry from '../pages/ProductionEntry.vue'
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
     path: '/plans',
     name: 'ProductionPlanning',
     component: ProductionPlanning,
+  },
+  {
+    path: '/production',
+    name: 'ProductionEntry',
+    component: ProductionEntry,
   },
 ]
 
